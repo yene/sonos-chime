@@ -1,10 +1,10 @@
 /*jshint esversion: 6 */
 
 // URL to a song file with a door gong.
-const CHIME_URL = 'https://shiro.ch/dingdong.m4a';
+const CHIME_URL = 'https://shiro.ch/dingdong.mp3';
 // How long to wait until old state is resumed
 const CHIME_TIMEOUT = 3000;
-const CHIME_VOLUME = 100;
+const CHIME_VOLUME = 30;
 
 
 var async = require("async");
@@ -84,6 +84,7 @@ function playDong(player) {
     function(callback){
       player.getCurrentState(function(err, s) {
         state = s;
+        console.log('state', s)
         callback(null, null);
       });
     },
@@ -101,6 +102,9 @@ function playDong(player) {
     },
     function(callback){
       player.currentTrack(function(err, t) {
+        // TODO why is uri undefined for radio streams
+        //  title: 'bbc_6music.m3u8'
+
         track = t;
         console.log('track', t);
         console.log('uri', t.uri);
@@ -114,7 +118,7 @@ function playDong(player) {
       });
     },
     function(callback){
-      player.pause(function(err, data) {
+      player.stop(function(err, data) {
         callback(null, null);
       });
     },
@@ -125,7 +129,11 @@ function playDong(player) {
     },
     // play dong
     function(callback){
-      player.play(CHIME_URL, function (err, playing) {
+      // TODO does not work when radio stream is currently running.
+      var streamurl = CHIME_URL.replace('https://', 'x-rincon-mp3radio://');
+      streamurl = streamurl.replace('http://', 'x-rincon-mp3radio://');
+      console.log('play', streamurl);
+      player.playStream(CHIME_URL, function (err, playing) {
         console.log('playing', [err, playing]);
         setTimeout(function(){
           callback(null, null);
@@ -150,14 +158,21 @@ function playDong(player) {
     },
     function(callback){
       if (state == 'playing') {
-        player.selectTrack(track.playlistposition, function(err, data) {
-          player.play(function(err, data) {
-            if (track.position > 0) {
-              player.seek(track.position, function(err, data) {});
-            }
+        // Streams have duration of 0
+        if (track.duration === 0){
+          player.play(track.uri, function(err, data) {
             callback(null, null);
           });
-        });
+        } else {
+          player.selectTrack(track.playlistposition, function(err, data) {
+            player.play(function(err, data) {
+              if (track.position > 0) {
+                player.seek(track.position, function(err, data) {});
+              }
+              callback(null, null);
+            });
+          });
+        }
       }
 
       if (state == 'paused') {
