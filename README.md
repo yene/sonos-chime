@@ -12,6 +12,7 @@ Example on how to play a doorbell on sonos.
 * HomeKit integration
 * Handle when no track is running
 * Does radio work
+* Does stream from airsonos work
 
 ## Steps
 * Save current state
@@ -37,3 +38,12 @@ Example on how to play a doorbell on sonos.
 * select previous song, go to old seek time, restore play state
 remove dong songs from queue
 * mode (repeat etc) should be the same as before
+
+## Supported urls
+x-file-cifs:*:*:*,
+file:*:audio/mpegurl:*,
+x-rincon:*:*:*,
+x-rincon-mp3radio:*:*:*,
+x-rincon-playlist:*:*:*,
+x-rincon-queue:*:*:*,
+x-rincon-stream:*:*:*
