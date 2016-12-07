@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 
 // URL to a song file with a door gong.
-const CHIME_URL = 'https://shiro.ch/dingdong.m4a';
+const CHIME_URL = 'x-rincon-mp3radio://shiro.ch/dingdong.mp3';
 // How long to wait until old state is resumed
 const CHIME_TIMEOUT = 3000;
 const CHIME_VOLUME = 100;
@@ -14,8 +14,13 @@ var url = require("url");
 var path = require("path");
 var fs = require("fs");
 var port = process.argv[2] || 8888;
+var isStream = false;
 
 var dongInUse = false;
+
+function isStream(uri) {
+  return uri.startsWith('hls-readio');
+}
 
 /*
 sonos.search(function(device) {
@@ -32,7 +37,7 @@ sonos.search(function(device) {
 //    var player = new sonos.Sonos(process.env.SONOS_HOST || '192.168.1.38'); // 192.168.198.207 192.168.1.38
 // playDong(player);
 
-var player = new sonos.Sonos('192.168.198.207');
+var player = new sonos.Sonos('192.168.198.214');
 playDong(player);
 /*
 http.createServer(function(request, response) {
@@ -104,8 +109,13 @@ function playDong(player) {
         track = t;
         console.log('track', t);
         console.log('uri', t.uri);
+        console.log('is stream ', isStream(t.uri));
+        isStream = isStream(t.uri);
         callback(null, null);
       });
+      // TODO: if current track is a stream, then swap streams, else do the add track trick.
+      // if stream play dong stream, then go back to prvious stream
+      // else below
     },
     function(callback){
       player.getQueue(function(err, q) {
@@ -125,6 +135,12 @@ function playDong(player) {
     },
     // play dong
     function(callback){
+      if (isStream) {
+        // TODO play dong as a stream
+
+        callback(null, null);
+        return;
+      }
       player.play(CHIME_URL, function (err, playing) {
         console.log('playing', [err, playing]);
         setTimeout(function(){
@@ -149,6 +165,11 @@ function playDong(player) {
       });
     },
     function(callback){
+      if (isStream) {
+        // play previous track.uri as a stream
+        return
+      }
+
       if (state == 'playing') {
         player.selectTrack(track.playlistposition, function(err, data) {
           player.play(function(err, data) {
